@@ -10,6 +10,8 @@ HTMLWidgets.widget({
     instance.xin = xin;
     // draw the graphic
     this.drawGraphic(el, xin, el.offsetWidth, el.offsetHeight);
+
+
   },
 
   drawGraphic: function(el, xin, width, height){
@@ -19,7 +21,6 @@ HTMLWidgets.widget({
 
     wide = HTMLWidgets.dataframeToD3(xin.data);
     factor = xin.groupval;
-    //console.log(xin);
     alldata = HTMLWidgets.dataframeToD3(xin.alldata);
     legdata = HTMLWidgets.dataframeToD3(xin.legdata);
 
@@ -29,25 +30,23 @@ HTMLWidgets.widget({
 
     traits.forEach(function(trait) {
       domainByTrait[trait] = d3.extent(wide,
-                  function(d) { return +d[trait]; }
-                  );
+                              function(d) { return d[trait]; });
     });
 
     // get the width and height
     //var width = el.offsetWidth;
-    //var height = el.offsetHeight;
+    //var height = el.offsetHeight0
     // var width = 960;
     // var size = 150;
     var xinlab = xin.labels;
     var padding = 10;
-    var size = (d3.min([width,height])-2*padding)/p;
+    var size = (d3.min([width,height])-2*padding)/p-4;
     var color = [];
     if(xin.settings.col.constructor===Array){
       color = xin.settings.col;
     } else {
       color = [xin.settings.col];
     }
-    // var color = d3.scale.category10();
 
     var x = d3.scale.linear()
             .range([padding / 2, size - padding / 2]);
@@ -71,10 +70,10 @@ HTMLWidgets.widget({
           .style("opacity", 0);
 
     svg = d3.select(el).append("svg")
-          .attr("width", size * p + padding*4)
-          .attr("height", size * p + padding*4)
+          .attr("width", size * p + padding*2)
+          .attr("height", size * p + padding*2)
           .append("g")
-          .attr("transform", "translate(" + padding*2 + "," + padding / 2 + ")");
+          .attr("transform", "translate(" + xin.leftmar + "," + xin.topmar + ")");
 
     xAxis.tickSize(size * p);
     yAxis.tickSize(-size * p);
@@ -153,7 +152,17 @@ HTMLWidgets.widget({
     cell.filter(function(d) { return d.i === d.j; }).append('text')
       .attr("x", size/2)
       .attr("y", size/2)
-      .text(function(d) { return xinlab[d.i]; }).style("text-anchor", "middle");
+      .text(function(d) { return xinlab[d.i]; })
+      .style("text-anchor", "middle");
+
+    // tooltip fn
+    if(typeof Shiny !== 'undefined'){
+        leftoffset = document.getElementById("pairsplot").offsetParent.offsetLeft
+        topoffset = document.getElementById("pairsplot").offsetParent.offsetTop
+    } else {
+        leftoffset = 0
+        topoffset = 0
+    }
 
     // plot function
     function plot(p) {
@@ -174,18 +183,20 @@ HTMLWidgets.widget({
         cell.selectAll("circle")
           .data(alldata)
           .enter().append("circle")
-          .attr("cx", function(d) {  return x(d[p.x]); })
+          .attr("cx", function(d) { return x(d[p.x]); })
           .attr("cy", function(d) { return y(d[p.y]); })
           .attr("r", xin.settings.cex)
+          .style("display", function(d) { return d[p.x]==null || d[p.y]==null ? "none" : null; })
           .style("fill", function(d) { return color[d.groupval]; })
           .style("opacity", xin.settings.opacity)
           .on("mouseover", function(d) {
             tooltip.transition()
               .duration(200)
               .style("opacity", .9);
-            tooltip.html(d.group)// + "<br/> (" + xValue(d) + ", " + yValue(d) + ")")
-              .style("left", (d3.event.pageX + 1) + "px")
-              .style("top", (d3.event.pageY - 10) + "px");
+            tooltip.html(d.tooltip)// + "<br/> (" + xValue(d) + ", " + yValue(d) + ")")
+              //.placement("right")
+              .style("left", (event.pageX - leftoffset + 1) + "px")
+              .style("top", (event.pageY - topoffset - 20) + "px");
           })
           .on("mouseout", function(d) {
             tooltip.transition()
@@ -194,6 +205,8 @@ HTMLWidgets.widget({
           });
       }
     }
+
+
     // cross function
     function cross(a, b) {
       var c = [], n = a.length, m = b.length, i, j;
@@ -204,6 +217,7 @@ HTMLWidgets.widget({
       };
       return c;
     }
+
   },
 
   resize: function(el, width, height, instance) {

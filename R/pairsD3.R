@@ -23,6 +23,10 @@
 #' @param width the width (and height) of the plot when viewed externally.
 #' @param opacity numeric between 0 and 1. The opacity of the plotting
 #'   symbols (default 0.9).
+#' @param tooltip an optional vector with the tool tip to be displayed when
+#'   hovering over an observation. You can include basic html.
+#' @param leftmar space on the left margin
+#' @param topmar space on the bottom margin
 #'
 #' @import htmlwidgets
 #'
@@ -35,7 +39,8 @@
 #'
 #' @export
 pairsD3 <- function(x, group=NULL, subset=NULL, labels = NULL, cex = 3,
-                    width = NULL, col=NULL, big=FALSE, theme="colour", opacity = 0.9) {
+                    width = NULL, col=NULL, big=FALSE, theme="colour", opacity = 0.9,
+                    tooltip = NULL,leftmar = 35,topmar=2) {
   height=width
   # ensure the data is a numeric matrix but also an array
   data = data.frame(data.matrix(x))
@@ -53,7 +58,17 @@ pairsD3 <- function(x, group=NULL, subset=NULL, labels = NULL, cex = 3,
   }
   n.group = length(levels(factor(group)))
   groupval = as.numeric(factor(group))-1
-  alldata = cbind(data,groupval,group)
+  if(is.null(tooltip)){
+    if(is.null(rownames(x))){
+      tooltip = c(1:n)
+    } else {
+      tooltip = rownames(x)
+    }
+    if(n.group>1){
+      tooltip=paste(tooltip,"<br/>",group)
+    }
+  }
+  alldata = cbind(data,groupval,group,tooltip)
   if(is.null(col)){
     if(is.element(theme,c("colour","color"))){
       # Set1 from brewer.pal() in the RColorBrewer package
@@ -87,7 +102,9 @@ pairsD3 <- function(x, group=NULL, subset=NULL, labels = NULL, cex = 3,
     n = n,
     p = p,
     labels = labels,
-    settings = settings
+    settings = settings,
+    leftmar = leftmar,
+    topmar = topmar
   )
   # create widget
   htmlwidgets::createWidget(
@@ -95,6 +112,7 @@ pairsD3 <- function(x, group=NULL, subset=NULL, labels = NULL, cex = 3,
     x = xin,
     width = width,
     height = height,
+    htmlwidgets::sizingPolicy(padding = 0, browser.fill = TRUE),
     package = 'pairsD3'
   )
 }
@@ -106,7 +124,7 @@ pairsD3 <- function(x, group=NULL, subset=NULL, labels = NULL, cex = 3,
 #' @param height height default '400px'
 #'
 #' @export
-pairsD3Output <- function(outputId, width = '100%', height = '400px'){
+pairsD3Output <- function(outputId, width = '100%', height = '100%'){
   shinyWidgetOutput(outputId, 'pairsD3', width, height, package = 'pairsD3')
 }
 
