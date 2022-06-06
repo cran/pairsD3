@@ -27,6 +27,8 @@
 #'   hovering over an observation. You can include basic html.
 #' @param leftmar space on the left margin
 #' @param topmar space on the bottom margin
+#' @param diag logical, whether or not the main diagonal is plotted
+#'   (scatter plot of variables against themselves).
 #'
 #' @import htmlwidgets
 #'
@@ -38,9 +40,10 @@
 #' }
 #'
 #' @export
-pairsD3 <- function(x, group=NULL, subset=NULL, labels = NULL, cex = 3,
-                    width = NULL, col=NULL, big=FALSE, theme="colour", opacity = 0.9,
-                    tooltip = NULL,leftmar = 35,topmar=2) {
+pairsD3 <- function(x, group = NULL, subset = NULL, labels = NULL, cex = 3,
+                    width = NULL, col = NULL, big = FALSE, theme = "colour", opacity = 0.9,
+                    tooltip = NULL, leftmar = 35, topmar = 2,
+                    diag = FALSE) {
   height=width
   # ensure the data is a numeric matrix but also an array
   data = data.frame(data.matrix(x))
@@ -78,7 +81,7 @@ pairsD3 <- function(x, group=NULL, subset=NULL, labels = NULL, cex = 3,
         col[is.na(col)] = col[1:sum(is.na(col))] # repeat colours
       }
     } else if(theme=="bw"){
-      col=gray.colors(n.group,start=0,end=0.75)
+      col=grDevices::gray.colors(n.group,start=0,end=0.75)
     }
   }
   if(length(col)>n.group){
@@ -92,7 +95,8 @@ pairsD3 <- function(x, group=NULL, subset=NULL, labels = NULL, cex = 3,
     height = height,
     col = col,
     cex = cex,
-    opacity = opacity
+    opacity = opacity,
+    diag = diag
   )
   # pass the data and settings using 'xin'
   xin <- list(
@@ -112,7 +116,7 @@ pairsD3 <- function(x, group=NULL, subset=NULL, labels = NULL, cex = 3,
     x = xin,
     width = width,
     height = height,
-    htmlwidgets::sizingPolicy(padding = 0, browser.fill = TRUE),
+    sizingPolicy = htmlwidgets::sizingPolicy(padding = 0, browser.fill = TRUE),
     package = 'pairsD3'
   )
 }
@@ -124,7 +128,7 @@ pairsD3 <- function(x, group=NULL, subset=NULL, labels = NULL, cex = 3,
 #' @param height height default '400px'
 #'
 #' @export
-pairsD3Output <- function(outputId, width = '100%', height = '100%'){
+pairsD3Output <- function(outputId, width = '100%', height = '400px'){
   shinyWidgetOutput(outputId, 'pairsD3', width, height, package = 'pairsD3')
 }
 
@@ -139,3 +143,8 @@ renderPairsD3 <- function(expr, env = parent.frame(), quoted = FALSE) {
   if (!quoted) { expr <- substitute(expr) } # force quoted
   shinyRenderWidget(expr, pairsD3Output, env, quoted = TRUE)
 }
+
+
+#' @importFrom grDevices gray.colors
+NULL
+
